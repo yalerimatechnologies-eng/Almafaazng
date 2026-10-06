@@ -1,0 +1,321 @@
+"use client";
+
+import DashboardShell from "@/components/dashboard/DashboardShell";
+
+type MetricIconName = "users" | "book" | "activity" | "bell" | "chart" | "shield";
+
+function MetricIcon({ type }: { type: MetricIconName }) {
+  const common = {
+    width: 23,
+    height: 23,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+
+  switch (type) {
+    case "users":
+      return (
+        <svg {...common}>
+          <circle cx="9" cy="8" r="3" />
+          <path d="M3.5 20c.6-3.6 2.4-5.5 5.5-5.5s4.9 1.9 5.5 5.5" />
+          <path d="M16 5.5a3 3 0 0 1 0 5.7" />
+          <path d="M17 14.5c2 .6 3.3 2.3 3.7 5" />
+        </svg>
+      );
+
+    case "book":
+      return (
+        <svg {...common}>
+          <path d="M5 4.5h10a4 4 0 0 1 4 4V20H9a4 4 0 0 0-4 0V4.5Z" />
+          <path d="M9 20V8.5a4 4 0 0 1 4-4" />
+        </svg>
+      );
+
+    case "activity":
+      return (
+        <svg {...common}>
+          <path d="M3 12h4l2.2-6 4.1 12 2.3-6H21" />
+        </svg>
+      );
+
+    case "bell":
+      return (
+        <svg {...common}>
+          <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z" />
+          <path d="M10 21h4" />
+        </svg>
+      );
+
+    case "chart":
+      return (
+        <svg {...common}>
+          <path d="M4 19V5" />
+          <path d="M4 19h16" />
+          <path d="m7 15 3-4 3 2 5-7" />
+        </svg>
+      );
+
+    case "shield":
+      return (
+        <svg {...common}>
+          <path d="M12 3 20 6v5.5c0 4.7-3.1 7.8-8 9.5-4.9-1.7-8-4.8-8-9.5V6l8-3Z" />
+          <path d="m8.7 12 2.1 2.1 4.6-4.6" />
+        </svg>
+      );
+  }
+}
+
+const metrics = [
+  {
+    label: "Total Students",
+    value: "—",
+    detail: "Live records pending",
+    icon: "users" as MetricIconName,
+    tone: "red",
+  },
+  {
+    label: "Teaching Staff",
+    value: "—",
+    detail: "Live records pending",
+    icon: "book" as MetricIconName,
+    tone: "dark",
+  },
+  {
+    label: "Today's Attendance",
+    value: "—",
+    detail: "Attendance module pending",
+    icon: "activity" as MetricIconName,
+    tone: "neutral",
+  },
+  {
+    label: "Pending Actions",
+    value: "—",
+    detail: "Review queue pending",
+    icon: "bell" as MetricIconName,
+    tone: "outline",
+  },
+];
+
+const operations = [
+  {
+    href: "/super-admin/people",
+    number: "01",
+    title: "People & HR",
+    description: "Students, educators, administrators and workforce.",
+    icon: "users" as MetricIconName,
+  },
+  {
+    href: "/super-admin/academics",
+    number: "02",
+    title: "Academics",
+    description: "Classes, subjects, curriculum and learning operations.",
+    icon: "book" as MetricIconName,
+  },
+  {
+    href: "/super-admin/cbt",
+    number: "03",
+    title: "CBT & Examinations",
+    description: "Assessment, examinations and question management.",
+    icon: "chart" as MetricIconName,
+  },
+  {
+    href: "/super-admin/reports",
+    number: "04",
+    title: "Reports & Intelligence",
+    description: "Institutional reporting and academic performance.",
+    icon: "chart" as MetricIconName,
+  },
+  {
+    href: "/super-admin/finance",
+    number: "05",
+    title: "Finance",
+    description: "Fees, payments and financial administration.",
+    icon: "shield" as MetricIconName,
+  },
+  {
+    href: "/super-admin/settings",
+    number: "06",
+    title: "System Settings",
+    description: "Configuration, security and system controls.",
+    icon: "shield" as MetricIconName,
+  },
+];
+
+export default function SuperAdminDashboard() {
+  return (
+    <DashboardShell>
+      <section className="welcome-row dashboard-hero">
+        <div className="dashboard-hero-copy">
+          <div className="eyebrow">SATURDAY · INSTITUTIONAL OVERVIEW</div>
+          <h1>Good day, Super Administrator</h1>
+          <p>
+            Your central workspace for monitoring and managing ALMAFAAZ ACADEMY.
+          </p>
+        </div>
+
+        <div className="welcome-actions">
+          <button
+            className="button-secondary"
+            type="button"
+            onClick={() => window.print()}
+          >
+            Print overview
+          </button>
+
+          <a className="button-primary" href="/super-admin/people">
+            Manage people <span>→</span>
+          </a>
+        </div>
+      </section>
+
+      <section className="metric-grid redesigned-metric-grid" aria-label="Institutional metrics">
+        {metrics.map((metric, index) => (
+          <article
+            className={`metric-card redesigned-metric-card metric-card-${metric.tone}`}
+            key={metric.label}
+          >
+            <div className="metric-card-top">
+              <span className="metric-index">0{index + 1}</span>
+              <span className="metric-icon">
+                <MetricIcon type={metric.icon} />
+              </span>
+            </div>
+
+            <div className="metric-card-main">
+              <div className="metric-value">{metric.value}</div>
+              <div className="metric-label">{metric.label}</div>
+            </div>
+
+            <div className="metric-detail">
+              <span className="metric-detail-line" />
+              {metric.detail}
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="dashboard-section-grid redesigned-section-grid">
+        <article className="workspace-card operations-card redesigned-operations-card">
+          <div className="card-heading redesigned-card-heading">
+            <div>
+              <span className="card-kicker">COMMAND CENTRE</span>
+              <h2>Institutional operations</h2>
+              <p>Move directly into the academy's core management areas.</p>
+            </div>
+
+            <span className="card-heading-mark">06</span>
+          </div>
+
+          <div className="operations-grid redesigned-operations-grid">
+            {operations.map((operation) => (
+              <a
+                href={operation.href}
+                className="operation-tile redesigned-operation-tile"
+                key={operation.href}
+              >
+                <div className="operation-tile-head">
+                  <span className="operation-number">{operation.number}</span>
+                  <span className="operation-symbol">
+                    <MetricIcon type={operation.icon} />
+                  </span>
+                </div>
+
+                <strong>{operation.title}</strong>
+                <small>{operation.description}</small>
+
+                <span className="tile-arrow">↗</span>
+              </a>
+            ))}
+          </div>
+        </article>
+
+        <aside className="workspace-card system-card redesigned-system-card">
+          <div className="card-heading redesigned-card-heading">
+            <div>
+              <span className="card-kicker">PLATFORM</span>
+              <h2>System status</h2>
+              <p>Current workspace readiness.</p>
+            </div>
+
+            <span className="status-live">
+              <i />
+              Online
+            </span>
+          </div>
+
+          <div className="system-status-list">
+            <div className="system-status-row">
+              <span>Application</span>
+              <strong>
+                <i />
+                Running
+              </strong>
+            </div>
+
+            <div className="system-status-row">
+              <span>Database connection</span>
+              <strong className="status-pending">Verification pending</strong>
+            </div>
+
+            <div className="system-status-row">
+              <span>Role security</span>
+              <strong className="status-pending">Policy review pending</strong>
+            </div>
+
+            <div className="system-status-row">
+              <span>Report engine</span>
+              <strong className="status-pending">Not configured</strong>
+            </div>
+          </div>
+
+          <div className="system-note">
+            <span className="system-note-label">SYSTEM NOTE</span>
+            <p>
+              Live institutional statistics will appear as the academy modules
+              are connected and verified.
+            </p>
+          </div>
+        </aside>
+      </section>
+
+      <section className="workspace-card activity-placeholder redesigned-activity-card">
+        <div className="card-heading redesigned-card-heading">
+          <div>
+            <span className="card-kicker">AUDIT STREAM</span>
+            <h2>Recent institutional activity</h2>
+            <p>Administrative events and important actions will appear here.</p>
+          </div>
+
+          <a href="/super-admin/activity" className="activity-view-link">
+            Activity Centre <span>→</span>
+          </a>
+        </div>
+
+        <div className="empty-state redesigned-empty-state">
+          <div className="empty-state-icon">
+            <MetricIcon type="activity" />
+          </div>
+
+          <div>
+            <strong>Activity tracking is being prepared</strong>
+            <p>
+              Authentication and administrative events will populate this feed
+              as the audit system is connected.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer className="dashboard-footer">
+        <span>© ALMAFAAZ ACADEMY</span>
+        <span>Smart Education & Institutional Management</span>
+        <span>Secure workspace</span>
+      </footer>
+    </DashboardShell>
+  );
+}

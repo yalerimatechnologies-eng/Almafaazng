@@ -1,0 +1,1147 @@
+"use client";
+
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import LiveClock from "./LiveClock";
+import { supabase } from "@/lib/supabase";
+
+type IconName =
+  | "grid"
+  | "activity"
+  | "users"
+  | "shield"
+  | "book"
+  | "briefcase"
+  | "monitor"
+  | "clipboard"
+  | "exam"
+  | "chart"
+  | "wallet"
+  | "door"
+  | "message"
+  | "settings"
+  | "search"
+  | "bell"
+  | "sun"
+  | "moon"
+  | "menu"
+  | "refresh"
+  | "chevron"
+  | "logout"
+  | "user"
+  | "calendar";
+
+type NavItem = {
+  label: string;
+  href: string;
+  icon: IconName;
+};
+
+type NavGroup = {
+  label: string;
+  icon: IconName;
+  prefix: string;
+  badge?: string | number;
+  items: NavItem[];
+};
+
+const peopleRoles: NavItem[] = [
+  {
+    label: "Super Administrators",
+    href: "/super-admin/people/super-admins",
+    icon: "shield",
+  },
+  {
+    label: "Administrators",
+    href: "/super-admin/people/administrators",
+    icon: "users",
+  },
+  {
+    label: "Teachers",
+    href: "/super-admin/people/teachers",
+    icon: "book",
+  },
+  {
+    label: "Staff",
+    href: "/super-admin/people/staff",
+    icon: "briefcase",
+  },
+  {
+    label: "CBT Officers",
+    href: "/super-admin/people/cbt-officers",
+    icon: "monitor",
+  },
+  {
+    label: "Islamic Section",
+    href: "/super-admin/people/islamic-section",
+    icon: "book",
+  },
+  {
+    label: "Parents & Guardians",
+    href: "/super-admin/people/parents",
+    icon: "users",
+  },
+  {
+    label: "Students",
+    href: "/super-admin/people/students",
+    icon: "users",
+  },
+];
+
+const navGroups: NavGroup[] = [
+  {
+    label: "People & HR",
+    icon: "users",
+    prefix: "/super-admin/people",
+    badge: 8,
+    items: peopleRoles,
+  },
+  {
+    label: "Academics",
+    icon: "book",
+    prefix: "/super-admin/academics",
+    items: [
+      {
+        label: "Academic Sessions",
+        href: "/super-admin/academics/sessions",
+        icon: "calendar",
+      },
+      {
+        label: "Classes & Arms",
+        href: "/super-admin/academics/classes",
+        icon: "grid",
+      },
+      {
+        label: "Subjects",
+        href: "/super-admin/academics/subjects",
+        icon: "book",
+      },
+      {
+        label: "Schemes of Work",
+        href: "/super-admin/academics/schemes",
+        icon: "clipboard",
+      },
+      {
+        label: "Lesson Plans",
+        href: "/super-admin/academics/lesson-plans",
+        icon: "clipboard",
+      },
+      {
+        label: "Timetables",
+        href: "/super-admin/academics/timetables",
+        icon: "calendar",
+      },
+    ],
+  },
+  {
+    label: "CBT & Examinations",
+    icon: "exam",
+    prefix: "/super-admin/cbt",
+    items: [
+      {
+        label: "Examinations",
+        href: "/super-admin/cbt/examinations",
+        icon: "exam",
+      },
+      {
+        label: "Question Bank",
+        href: "/super-admin/cbt/questions",
+        icon: "clipboard",
+      },
+      {
+        label: "Exam Management",
+        href: "/super-admin/cbt/management",
+        icon: "monitor",
+      },
+      {
+        label: "Results",
+        href: "/super-admin/cbt/results",
+        icon: "chart",
+      },
+    ],
+  },
+  {
+    label: "Reports & Intelligence",
+    icon: "chart",
+    prefix: "/super-admin/reports",
+    items: [
+      {
+        label: "Student Reports",
+        href: "/super-admin/reports/students",
+        icon: "users",
+      },
+      {
+        label: "Academic Reports",
+        href: "/super-admin/reports/academic",
+        icon: "book",
+      },
+      {
+        label: "Performance Analysis",
+        href: "/super-admin/reports/performance",
+        icon: "chart",
+      },
+    ],
+  },
+  {
+    label: "Finance",
+    icon: "wallet",
+    prefix: "/super-admin/finance",
+    items: [
+      {
+        label: "Finance Overview",
+        href: "/super-admin/finance",
+        icon: "wallet",
+      },
+      {
+        label: "Fees",
+        href: "/super-admin/finance/fees",
+        icon: "wallet",
+      },
+      {
+        label: "Payments",
+        href: "/super-admin/finance/payments",
+        icon: "wallet",
+      },
+      {
+        label: "Financial Reports",
+        href: "/super-admin/finance/reports",
+        icon: "chart",
+      },
+    ],
+  },
+  {
+    label: "Visitors",
+    icon: "door",
+    prefix: "/super-admin/visitors",
+    items: [
+      {
+        label: "Visitor Register",
+        href: "/super-admin/visitors",
+        icon: "door",
+      },
+      {
+        label: "Visitor History",
+        href: "/super-admin/visitors/history",
+        icon: "activity",
+      },
+    ],
+  },
+];
+
+const workspaceLinks: NavItem[] = [
+  {
+    label: "Overview",
+    href: "/super-admin",
+    icon: "grid",
+  },
+  {
+    label: "Activity Centre",
+    href: "/super-admin/activity",
+    icon: "activity",
+  },
+];
+
+const systemLinks: NavItem[] = [
+  {
+    label: "Messages",
+    href: "/super-admin/messages",
+    icon: "message",
+  },
+  {
+    label: "Security & Audit",
+    href: "/super-admin/security",
+    icon: "shield",
+  },
+  {
+    label: "Settings",
+    href: "/super-admin/settings",
+    icon: "settings",
+  },
+];
+
+function Icon({
+  name,
+  size = 20,
+}: {
+  name: IconName;
+  size?: number;
+}) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+
+  switch (name) {
+    case "grid":
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" />
+          <rect x="14" y="14" width="7" height="7" rx="1" />
+        </svg>
+      );
+
+    case "activity":
+      return (
+        <svg {...common}>
+          <path d="M3 12h4l2-7 4 14 2-7h6" />
+        </svg>
+      );
+
+    case "users":
+      return (
+        <svg {...common}>
+          <circle cx="9" cy="8" r="3" />
+          <path d="M3 20c.6-3.6 2.5-5.5 6-5.5s5.4 1.9 6 5.5" />
+          <path d="M16 5.5a3 3 0 0 1 0 5.8" />
+          <path d="M17 14.5c2.2.4 3.5 2 4 4.5" />
+        </svg>
+      );
+
+    case "shield":
+      return (
+        <svg {...common}>
+          <path d="M12 3 20 6v5c0 5.2-3.2 8.5-8 10-4.8-1.5-8-4.8-8-10V6l8-3Z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>
+      );
+
+    case "book":
+      return (
+        <svg {...common}>
+          <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5V4.5Z" />
+          <path d="M4 4.5v17" />
+          <path d="M8 6h8" />
+          <path d="M8 10h8" />
+        </svg>
+      );
+
+    case "briefcase":
+      return (
+        <svg {...common}>
+          <rect x="3" y="7" width="18" height="13" rx="2" />
+          <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          <path d="M3 12h18" />
+          <path d="M10 12v2h4v-2" />
+        </svg>
+      );
+
+    case "monitor":
+      return (
+        <svg {...common}>
+          <rect x="3" y="4" width="18" height="13" rx="2" />
+          <path d="M8 21h8" />
+          <path d="M12 17v4" />
+        </svg>
+      );
+
+    case "clipboard":
+      return (
+        <svg {...common}>
+          <rect x="5" y="4" width="14" height="17" rx="2" />
+          <path d="M9 4V2h6v2" />
+          <path d="M8 9h8" />
+          <path d="M8 13h8" />
+          <path d="M8 17h5" />
+        </svg>
+      );
+
+    case "exam":
+      return (
+        <svg {...common}>
+          <rect x="4" y="3" width="16" height="18" rx="2" />
+          <path d="M8 7h8" />
+          <path d="M8 11h2" />
+          <path d="M14 11h2" />
+          <path d="M8 15h2" />
+          <path d="M14 15h2" />
+          <path d="M8 19h8" />
+        </svg>
+      );
+
+    case "chart":
+      return (
+        <svg {...common}>
+          <path d="M4 20V10" />
+          <path d="M10 20V4" />
+          <path d="M16 20v-7" />
+          <path d="M22 20H2" />
+        </svg>
+      );
+
+    case "wallet":
+      return (
+        <svg {...common}>
+          <path d="M4 6h15a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a3 3 0 0 1 3-3h11" />
+          <path d="M16 13h5" />
+          <circle cx="16" cy="13" r=".8" fill="currentColor" stroke="none" />
+        </svg>
+      );
+
+    case "door":
+      return (
+        <svg {...common}>
+          <path d="M5 21h14" />
+          <path d="M7 21V4l10-2v19" />
+          <path d="M12 12h.01" />
+        </svg>
+      );
+
+    case "message":
+      return (
+        <svg {...common}>
+          <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-5 4v-4.2a2.5 2.5 0 0 1-2-2.3v-8Z" />
+          <path d="M8 8h8" />
+          <path d="M8 12h5" />
+        </svg>
+      );
+
+    case "settings":
+      return (
+        <svg {...common}>
+          <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z" />
+          <path d="m19.4 15 .1.1a2 2 0 0 1-2.8 2.8l-.1-.1a2 2 0 0 0-3.4 1.4V19a2 2 0 0 1-4 0v-.2a2 2 0 0 0-3.4-1.4l-.1.1A2 2 0 0 1 3 14.7l.1-.1A2 2 0 0 0 1.7 11H1.5a2 2 0 0 1 0-4h.2A2 2 0 0 0 3.1 3.6L3 3.5A2 2 0 0 1 5.8.7l.1.1A2 2 0 0 0 9.3-.6V1a2 2 0 0 1 4 0v.2a2 2 0 0 0 3.4 1.4l.1-.1A2 2 0 0 1 19.6 5l-.1.1a2 2 0 0 0 1.4 3.4h.2a2 2 0 0 1 0 4h-.2a2 2 0 0 0-1.5 2.5Z" />
+        </svg>
+      );
+
+    case "search":
+      return (
+        <svg {...common}>
+          <circle cx="11" cy="11" r="6.5" />
+          <path d="m16 16 5 5" />
+        </svg>
+      );
+
+    case "bell":
+      return (
+        <svg {...common}>
+          <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+          <path d="M10 21h4" />
+        </svg>
+      );
+
+    case "sun":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2" />
+          <path d="M12 20v2" />
+          <path d="m4.93 4.93 1.41 1.41" />
+          <path d="m17.66 17.66 1.41 1.41" />
+          <path d="M2 12h2" />
+          <path d="M20 12h2" />
+          <path d="m6.34 17.66-1.41 1.41" />
+          <path d="m19.07 4.93-1.41 1.41" />
+        </svg>
+      );
+
+    case "moon":
+      return (
+        <svg {...common}>
+          <path d="M20.5 15.5A8.5 8.5 0 0 1 8.5 3.5a8.8 8.8 0 1 0 12 12Z" />
+        </svg>
+      );
+
+    case "menu":
+      return (
+        <svg {...common}>
+          <path d="M4 6h16" />
+          <path d="M4 12h16" />
+          <path d="M4 18h16" />
+        </svg>
+      );
+
+    case "refresh":
+      return (
+        <svg {...common}>
+          <path d="M20 11a8 8 0 0 0-14.7-4.2L3 9" />
+          <path d="M3 4v5h5" />
+          <path d="M4 13a8 8 0 0 0 14.7 4.2L21 15" />
+          <path d="M21 20v-5h-5" />
+        </svg>
+      );
+
+    case "chevron":
+      return (
+        <svg {...common}>
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      );
+
+    case "logout":
+      return (
+        <svg {...common}>
+          <path d="M10 17l5-5-5-5" />
+          <path d="M15 12H3" />
+          <path d="M21 3v18" />
+        </svg>
+      );
+
+    case "user":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="8" r="3.5" />
+          <path d="M5 21c.8-4.2 3.1-6 7-6s6.2 1.8 7 6" />
+        </svg>
+      );
+
+    case "calendar":
+      return (
+        <svg {...common}>
+          <rect x="3" y="4" width="18" height="17" rx="2" />
+          <path d="M8 2v4" />
+          <path d="M16 2v4" />
+          <path d="M3 9h18" />
+        </svg>
+      );
+
+    default:
+      return null;
+  }
+}
+
+function NavLink({
+  item,
+  active,
+  collapsed,
+  onNavigate,
+}: {
+  item: NavItem;
+  active: boolean;
+  collapsed: boolean;
+  onNavigate: () => void;
+}) {
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      className={`nav-link ${active ? "nav-link-active" : ""}`}
+      title={collapsed ? item.label : undefined}
+    >
+      <span className="nav-link-icon">
+        <Icon name={item.icon} size={18} />
+      </span>
+
+      {!collapsed && (
+        <>
+          <span className="nav-link-label">{item.label}</span>
+          {active && <span className="nav-selected-dot" />}
+        </>
+      )}
+    </Link>
+  );
+}
+
+function ExpandableNav({
+  group,
+  open,
+  active,
+  collapsed,
+  onToggle,
+  onNavigate,
+  isActiveItem,
+}: {
+  group: NavGroup;
+  open: boolean;
+  active: boolean;
+  collapsed: boolean;
+  onToggle: () => void;
+  onNavigate: () => void;
+  isActiveItem: (href: string) => boolean;
+}) {
+  if (collapsed) {
+    return (
+      <div className="nav-collapsed-group">
+        <button
+          type="button"
+          className={`nav-group-trigger ${active ? "nav-group-active" : ""}`}
+          onClick={onToggle}
+          title={group.label}
+          aria-label={group.label}
+        >
+          <span className="nav-link-icon">
+            <Icon name={group.icon} size={18} />
+          </span>
+        </button>
+
+        {open && (
+          <div className="nav-collapsed-popover">
+            <div className="nav-collapsed-popover-title">
+              {group.label}
+            </div>
+
+            {group.items.map((item) => {
+              const itemActive = isActiveItem(item.href);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={`nav-collapsed-item ${
+                    itemActive ? "nav-collapsed-item-active" : ""
+                  }`}
+                >
+                  <Icon name={item.icon} size={16} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`nav-group ${open ? "nav-group-open" : ""}`}>
+      <button
+        type="button"
+        className={`nav-group-trigger ${active ? "nav-group-active" : ""}`}
+        onClick={onToggle}
+        aria-expanded={open}
+      >
+        <span className="nav-link-icon">
+          <Icon name={group.icon} size={18} />
+        </span>
+
+        <span className="nav-link-label">{group.label}</span>
+
+        {group.badge !== undefined && (
+          <span className="nav-group-badge">{group.badge}</span>
+        )}
+
+        <span className="nav-group-chevron">
+          <Icon name="chevron" size={15} />
+        </span>
+      </button>
+
+      <div className="nav-submenu-wrap">
+        <div className="nav-submenu">
+          {group.items.map((item) => {
+            const itemActive = isActiveItem(item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onNavigate}
+                className={`nav-submenu-item ${
+                  itemActive ? "nav-submenu-item-active" : ""
+                }`}
+              >
+                <span className="nav-submenu-line" />
+                <span className="nav-submenu-icon">
+                  <Icon name={item.icon} size={15} />
+                </span>
+                <span>{item.label}</span>
+                {itemActive && <span className="nav-selected-dot" />}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function DashboardShell({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [dark, setDark] = useState(false);
+  const [search, setSearch] = useState("");
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [nigeriaTime, setNigeriaTime] = useState("");
+  const [nigeriaDate, setNigeriaDate] = useState("");
+  const [signingOut, setSigningOut] = useState(false);
+
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  const activeGroup = useMemo(() => {
+    return (
+      navGroups.find((group) => pathname.startsWith(group.prefix))?.prefix ??
+      null
+    );
+  }, [pathname]);
+
+  const isActiveItem = (href: string) => {
+    if (href === "/super-admin") {
+      return pathname === href;
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  useEffect(() => {
+    if (activeGroup) {
+      setOpenGroup(activeGroup);
+    }
+  }, [activeGroup]);
+
+  useEffect(() => {
+    setMobileOpen(false);
+    setProfileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle(
+      "dashboard-theme-dark",
+      dark
+    );
+
+    return () => {
+      document.documentElement.classList.remove("dashboard-theme-dark");
+    };
+  }, [dark]);
+
+  useEffect(() => {
+    const updateNigeriaTime = () => {
+      const now = new Date();
+
+      setNigeriaTime(
+        new Intl.DateTimeFormat("en-NG", {
+          timeZone: "Africa/Lagos",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        }).format(now)
+      );
+
+      setNigeriaDate(
+        new Intl.DateTimeFormat("en-NG", {
+          timeZone: "Africa/Lagos",
+          weekday: "long",
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }).format(now)
+      );
+    };
+
+    updateNigeriaTime();
+
+    const timer = window.setInterval(updateNigeriaTime, 1000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(event.target as Node)
+      ) {
+        setProfileOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.toggle(
+      "dashboard-drawer-open",
+      mobileOpen
+    );
+
+    return () => {
+      document.body.classList.remove("dashboard-drawer-open");
+    };
+  }, [mobileOpen]);
+
+  const handleGroupToggle = (prefix: string) => {
+    setOpenGroup((current) => (current === prefix ? null : prefix));
+  };
+
+  const handleMobileOpen = () => {
+    setMobileOpen((current) => !current);
+  };
+
+  const handleNavigate = () => {
+    setProfileOpen(false);
+
+    if (window.innerWidth <= 700) {
+      setMobileOpen(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
+  const handleSignOut = async () => {
+    if (signingOut) return;
+
+    setSigningOut(true);
+
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      setSigningOut(false);
+      return;
+    }
+
+    window.location.href = "/";
+  };
+
+  return (
+    <div className={`dashboard-shell ${dark ? "dashboard-is-dark" : ""}`}>
+      <aside
+        className={`dashboard-sidebar ${
+          collapsed ? "dashboard-sidebar-collapsed" : ""
+        } ${mobileOpen ? "dashboard-sidebar-mobile-open" : ""}`}
+      >
+        <div className="sidebar-brand">
+          <Link
+            href="/super-admin"
+            className="sidebar-brand-link"
+            onClick={handleNavigate}
+          >
+            <div className="sidebar-brand-mark">A</div>
+
+            {!collapsed && (
+              <div className="sidebar-brand-copy">
+                <strong>ALMAFAAZ</strong>
+                <span>ACADEMY</span>
+              </div>
+            )}
+          </Link>
+
+          <button
+            type="button"
+            className="sidebar-collapse-button"
+            onClick={() => setCollapsed((value) => !value)}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <Icon name="chevron" size={17} />
+          </button>
+        </div>
+
+        <div className="sidebar-scroll">
+          <div className="sidebar-section">
+            {!collapsed && (
+              <div className="sidebar-section-label">WORKSPACE</div>
+            )}
+
+            {workspaceLinks.map((item) => (
+              <NavLink
+                key={item.href}
+                item={item}
+                active={isActiveItem(item.href)}
+                collapsed={collapsed}
+                onNavigate={handleNavigate}
+              />
+            ))}
+          </div>
+
+          <div className="sidebar-section">
+            {!collapsed && (
+              <div className="sidebar-section-label">MANAGEMENT</div>
+            )}
+
+            {navGroups.map((group) => (
+              <ExpandableNav
+                key={group.prefix}
+                group={group}
+                open={openGroup === group.prefix}
+                active={pathname.startsWith(group.prefix)}
+                collapsed={collapsed}
+                onToggle={() => handleGroupToggle(group.prefix)}
+                onNavigate={handleNavigate}
+                isActiveItem={isActiveItem}
+              />
+            ))}
+          </div>
+
+          <div className="sidebar-section">
+            {!collapsed && (
+              <div className="sidebar-section-label">SYSTEM</div>
+            )}
+
+            {systemLinks.map((item) => (
+              <NavLink
+                key={item.href}
+                item={item}
+                active={isActiveItem(item.href)}
+                collapsed={collapsed}
+                onNavigate={handleNavigate}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="sidebar-footer">
+          {!collapsed && (
+            <div className="sidebar-footer-status">
+              <span className="sidebar-status-indicator" />
+              <span>System operational</span>
+            </div>
+          )}
+
+          <div className="sidebar-footer-admin">
+            <div className="sidebar-admin-avatar">SA</div>
+
+            {!collapsed && (
+              <div className="sidebar-admin-copy">
+                <strong>Super Administrator</strong>
+                <span>Root access</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </aside>
+
+      {mobileOpen && (
+        <button
+          type="button"
+          className="dashboard-mobile-overlay"
+          aria-label="Close navigation"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      <div
+        className={`dashboard-main ${
+          collapsed ? "dashboard-main-expanded" : ""
+        }`}
+      >
+        <header className="dashboard-topbar">
+          <div className="topbar-left">
+            <button
+              type="button"
+              className="mobile-menu-button"
+              onClick={handleMobileOpen}
+              aria-label="Open navigation"
+            >
+              <Icon name="menu" size={21} />
+            </button>
+
+            <div className="topbar-search">
+              <Icon name="search" size={18} />
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search workspace..."
+                aria-label="Search workspace"
+              />
+              {search && (
+                <button
+                  type="button"
+                  className="topbar-search-clear"
+                  onClick={() => setSearch("")}
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="topbar-right">
+            <div className="dashboard-clock">
+              <LiveClock />
+            </div>
+
+            <button
+              type="button"
+              className="topbar-icon-button"
+              onClick={() => setDark((value) => !value)}
+              aria-label={
+                dark ? "Switch to light theme" : "Switch to dark theme"
+              }
+              title={dark ? "Light theme" : "Dark theme"}
+            >
+              <Icon name={dark ? "sun" : "moon"} size={19} />
+            </button>
+
+            <button
+              type="button"
+              className="topbar-icon-button"
+              aria-label="Notifications"
+              title="Notifications"
+            >
+              <Icon name="bell" size={19} />
+              <span className="notification-dot" />
+            </button>
+
+            <button
+              type="button"
+              className="topbar-icon-button"
+              onClick={handleRefresh}
+              aria-label="Refresh dashboard"
+              title="Refresh dashboard"
+            >
+              <Icon name="refresh" size={19} />
+            </button>
+
+            <div className="topbar-profile-wrap" ref={profileRef}>
+              <button
+                type="button"
+                className={`topbar-profile ${
+                  profileOpen ? "is-open" : ""
+                }`}
+                onClick={() => setProfileOpen((value) => !value)}
+                aria-expanded={profileOpen}
+                aria-haspopup="menu"
+              >
+                <div className="topbar-profile-avatar">SA</div>
+
+                <div className="topbar-profile-copy">
+                  <strong>Super Administrator</strong>
+                  <span>Root access</span>
+                </div>
+
+                <span className="topbar-profile-chevron">
+                  <Icon name="chevron" size={15} />
+                </span>
+              </button>
+
+              {profileOpen && (
+                <div className="profile-control-panel" role="menu">
+                  <div className="profile-panel-head">
+                    <div className="profile-panel-avatar">
+                      <Icon name="user" size={21} />
+                    </div>
+
+                    <div>
+                      <strong>Super Administrator</strong>
+                      <span>Full academy control</span>
+                    </div>
+                  </div>
+
+                  <div className="profile-time-card">
+                    <div className="profile-time-label">
+                      <span className="profile-live-dot" />
+                      NIGERIA · WAT
+                    </div>
+
+                    <strong>{nigeriaTime}</strong>
+                    <small>{nigeriaDate}</small>
+                  </div>
+
+                  <div className="profile-panel-links">
+                    <Link
+                      href="/super-admin/activity"
+                      onClick={handleNavigate}
+                      role="menuitem"
+                    >
+                      <span>
+                        <Icon name="activity" size={17} />
+                      </span>
+                      <div>
+                        <strong>Activity Centre</strong>
+                        <small>Review academy activity</small>
+                      </div>
+                      <Icon name="chevron" size={15} />
+                    </Link>
+
+                    <Link
+                      href="/super-admin/settings"
+                      onClick={handleNavigate}
+                      role="menuitem"
+                    >
+                      <span>
+                        <Icon name="settings" size={17} />
+                      </span>
+                      <div>
+                        <strong>Settings</strong>
+                        <small>Manage academy configuration</small>
+                      </div>
+                      <Icon name="chevron" size={15} />
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => setDark((value) => !value)}
+                      role="menuitem"
+                    >
+                      <span>
+                        <Icon name={dark ? "sun" : "moon"} size={17} />
+                      </span>
+                      <div>
+                        <strong>
+                          {dark ? "Light theme" : "Dark theme"}
+                        </strong>
+                        <small>
+                          {dark
+                            ? "Return to light interface"
+                            : "Use dark interface"}
+                        </small>
+                      </div>
+                      <span className="profile-toggle-state">
+                        {dark ? "ON" : "OFF"}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleRefresh}
+                      role="menuitem"
+                    >
+                      <span>
+                        <Icon name="refresh" size={17} />
+                      </span>
+                      <div>
+                        <strong>Refresh workspace</strong>
+                        <small>Reload current academy view</small>
+                      </div>
+                      <Icon name="chevron" size={15} />
+                    </button>
+                  </div>
+
+                  <div className="profile-panel-footer">
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      disabled={signingOut}
+                    >
+                      <Icon name="logout" size={17} />
+                      <span>
+                        {signingOut ? "Signing out..." : "Sign out"}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <main className="dashboard-content">{children}</main>
+      </div>
+    </div>
+  );
+}
