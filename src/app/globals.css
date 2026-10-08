@@ -747,6 +747,100 @@ a {
   font-weight: 700;
 }
 
+/* =========================================================
+   SEMANTIC DASHBOARD ACCENTS
+   ========================================================= */
+
+.dashboard-accent-green {
+  --module-accent: #2f7d4a;
+  --module-accent-soft: #edf7f0;
+  --module-accent-border: #cfe5d6;
+}
+
+.dashboard-accent-silver {
+  --module-accent: #707780;
+  --module-accent-soft: #f1f3f5;
+  --module-accent-border: #d9dde1;
+}
+
+.dashboard-accent-red {
+  --module-accent: var(--red);
+  --module-accent-soft: var(--red-light);
+  --module-accent-border: #ead0d0;
+}
+
+.dashboard-accent-black {
+  --module-accent: #252525;
+  --module-accent-soft: #f0f0f0;
+  --module-accent-border: #d6d6d6;
+}
+
+.dashboard-metric.dashboard-accent-green .dashboard-metric-icon,
+.dashboard-metric.dashboard-accent-silver .dashboard-metric-icon,
+.dashboard-metric.dashboard-accent-red .dashboard-metric-icon,
+.dashboard-metric.dashboard-accent-black .dashboard-metric-icon {
+  background: var(--module-accent-soft);
+  color: var(--module-accent);
+}
+
+.dashboard-module.dashboard-accent-green .dashboard-module-icon,
+.dashboard-module.dashboard-accent-silver .dashboard-module-icon,
+.dashboard-module.dashboard-accent-red .dashboard-module-icon,
+.dashboard-module.dashboard-accent-black .dashboard-module-icon {
+  background: var(--module-accent-soft);
+  color: var(--module-accent);
+}
+
+.dashboard-module.dashboard-accent-green:hover,
+.dashboard-module.dashboard-accent-silver:hover,
+.dashboard-module.dashboard-accent-red:hover,
+.dashboard-module.dashboard-accent-black:hover {
+  border-color: var(--module-accent-border);
+}
+
+.dashboard-module.dashboard-accent-green .dashboard-module-arrow,
+.dashboard-module.dashboard-accent-silver .dashboard-module-arrow,
+.dashboard-module.dashboard-accent-red .dashboard-module-arrow,
+.dashboard-module.dashboard-accent-black .dashboard-module-arrow {
+  color: var(--module-accent);
+}
+
+.dashboard-module.dashboard-accent-green .dashboard-module-number,
+.dashboard-module.dashboard-accent-silver .dashboard-module-number,
+.dashboard-module.dashboard-accent-red .dashboard-module-number,
+.dashboard-module.dashboard-accent-black .dashboard-module-number {
+  color: var(--module-accent);
+  opacity: .78;
+}
+
+.dashboard-footer-grid {
+.dashboard-module.dashboard-accent-silver:hover,
+.dashboard-module.dashboard-accent-red:hover,
+.dashboard-module.dashboard-accent-black:hover {
+  border-color: var(--module-accent-border);
+}
+
+.dashboard-module.dashboard-accent-green .dashboard-module-arrow,
+.dashboard-module.dashboard-accent-silver .dashboard-module-arrow,
+.dashboard-module.dashboard-accent-red .dashboard-module-arrow,
+.dashboard-module.dashboard-accent-black .dashboard-module-arrow {
+  color: var(--module-accent);
+}
+
+.dashboard-module.dashboard-accent-green .dashboard-module-number,
+.dashboard-module.dashboard-accent-silver .dashboard-module-number,
+.dashboard-module.dashboard-accent-red .dashboard-module-number,
+.dashboard-module.dashboard-accent-black .dashboard-module-number {
+  color: var(--module-accent);
+  opacity: .78;
+}
+
+  padding-top: 15px;
+  color: var(--red);
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .dashboard-footer-grid {
   display: grid;
   grid-template-columns: 1.5fr 1fr;

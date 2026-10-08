@@ -12,11 +12,21 @@ type Stats = {
   sessions: number;
 };
 
-function Icon({
-  type,
-}: {
-  type: "people" | "academic" | "cbt" | "report" | "finance" | "settings";
-}) {
+type IconType =
+  | "people"
+  | "academic"
+  | "cbt"
+  | "report"
+  | "finance"
+  | "settings";
+
+type Accent =
+  | "green"
+  | "silver"
+  | "red"
+  | "black";
+
+function Icon({ type }: { type: IconType }) {
   const paths = {
     people: (
       <>
@@ -50,7 +60,7 @@ function Icon({
     ),
     settings: (
       <>
-        <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" />
+        <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0-0-8Z" />
         <path d="M4.9 4.9 7 7M17 17l2.1 2.1M3 12h3M18 12h3M4.9 19.1 7 17M17 7l2.1-2.1M12 3v3M12 18v3" />
       </>
     ),
@@ -62,20 +72,31 @@ function Icon({
       fill="none"
       stroke="currentColor"
       strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
     >
       {paths[type]}
     </svg>
   );
 }
 
-const modules = [
+const modules: Array<{
+  number: string;
+  title: string;
+  description: string;
+  href: string;
+  icon: IconType;
+  accent: Accent;
+}> = [
   {
     number: "01",
     title: "People & HR",
     description:
       "Manage administrators, teachers, staff, parents, students and institutional personnel.",
     href: "/super-admin/people",
-    icon: "people" as const,
+    icon: "people",
+    accent: "silver",
   },
   {
     number: "02",
@@ -83,7 +104,8 @@ const modules = [
     description:
       "Control academic sessions, classes, subjects, schemes, lesson plans and timetables.",
     href: "/super-admin/academics",
-    icon: "academic" as const,
+    icon: "academic",
+    accent: "green",
   },
   {
     number: "03",
@@ -91,7 +113,8 @@ const modules = [
     description:
       "Manage examinations, question banks, CBT operations and examination results.",
     href: "/super-admin/cbt",
-    icon: "cbt" as const,
+    icon: "cbt",
+    accent: "red",
   },
   {
     number: "04",
@@ -99,7 +122,8 @@ const modules = [
     description:
       "Access institutional reports, academic reports and performance intelligence.",
     href: "/super-admin/reports",
-    icon: "report" as const,
+    icon: "report",
+    accent: "black",
   },
   {
     number: "05",
@@ -107,7 +131,8 @@ const modules = [
     description:
       "Manage fees, payments and financial reporting across the academy.",
     href: "/super-admin/finance",
-    icon: "finance" as const,
+    icon: "finance",
+    accent: "silver",
   },
   {
     number: "06",
@@ -115,7 +140,45 @@ const modules = [
     description:
       "Control institutional settings, security, audit and system configuration.",
     href: "/super-admin/settings",
-    icon: "settings" as const,
+    icon: "settings",
+    accent: "black",
+  },
+];
+
+const metricDefinitions: Array<{
+  key: keyof Stats;
+  label: string;
+  note: string;
+  icon: IconType;
+  accent: Accent;
+}> = [
+  {
+    key: "students",
+    label: "Students",
+    note: "Registered student records",
+    icon: "people",
+    accent: "green",
+  },
+  {
+    key: "teachers",
+    label: "Teachers",
+    note: "Teaching personnel records",
+    icon: "academic",
+    accent: "green",
+  },
+  {
+    key: "staff",
+    label: "Staff",
+    note: "Operational staff records",
+    icon: "people",
+    accent: "silver",
+  },
+  {
+    key: "sessions",
+    label: "Academic Sessions",
+    note: "Configured academic sessions",
+    icon: "academic",
+    accent: "black",
   },
 ];
 
@@ -217,57 +280,30 @@ export default function SuperAdminDashboard() {
       </section>
 
       <section className="dashboard-metrics">
-        <div className="dashboard-metric">
-          <div className="dashboard-metric-top">
-            <span className="dashboard-metric-label">Students</span>
-            <span className="dashboard-metric-icon">
-              <Icon type="people" />
-            </span>
-          </div>
-          <div className="dashboard-metric-value">{stats.students}</div>
-          <div className="dashboard-metric-note">
-            Registered student records
-          </div>
-        </div>
+        {metricDefinitions.map((metric) => (
+          <div
+            className={`dashboard-metric dashboard-accent-${metric.accent}`}
+            key={metric.key}
+          >
+            <div className="dashboard-metric-top">
+              <span className="dashboard-metric-label">
+                {metric.label}
+              </span>
 
-        <div className="dashboard-metric">
-          <div className="dashboard-metric-top">
-            <span className="dashboard-metric-label">Teachers</span>
-            <span className="dashboard-metric-icon">
-              <Icon type="academic" />
-            </span>
-          </div>
-          <div className="dashboard-metric-value">{stats.teachers}</div>
-          <div className="dashboard-metric-note">
-            Teaching personnel records
-          </div>
-        </div>
+              <span className="dashboard-metric-icon">
+                <Icon type={metric.icon} />
+              </span>
+            </div>
 
-        <div className="dashboard-metric">
-          <div className="dashboard-metric-top">
-            <span className="dashboard-metric-label">Staff</span>
-            <span className="dashboard-metric-icon">
-              <Icon type="people" />
-            </span>
-          </div>
-          <div className="dashboard-metric-value">{stats.staff}</div>
-          <div className="dashboard-metric-note">
-            Operational staff records
-          </div>
-        </div>
+            <div className="dashboard-metric-value">
+              {stats[metric.key]}
+            </div>
 
-        <div className="dashboard-metric">
-          <div className="dashboard-metric-top">
-            <span className="dashboard-metric-label">Academic Sessions</span>
-            <span className="dashboard-metric-icon">
-              <Icon type="academic" />
-            </span>
+            <div className="dashboard-metric-note">
+              {metric.note}
+            </div>
           </div>
-          <div className="dashboard-metric-value">{stats.sessions}</div>
-          <div className="dashboard-metric-note">
-            Configured academic sessions
-          </div>
-        </div>
+        ))}
       </section>
 
       <div className="dashboard-section-heading">
@@ -279,16 +315,19 @@ export default function SuperAdminDashboard() {
         {modules.map((module) => (
           <Link
             href={module.href}
-            className="dashboard-module"
+            className={`dashboard-module dashboard-accent-${module.accent}`}
             key={module.href}
           >
-            <div className="dashboard-module-number">{module.number}</div>
+            <div className="dashboard-module-number">
+              {module.number}
+            </div>
 
             <div className="dashboard-module-icon">
               <Icon type={module.icon} />
             </div>
 
             <h3>{module.title}</h3>
+
             <p>{module.description}</p>
 
             <div className="dashboard-module-arrow">

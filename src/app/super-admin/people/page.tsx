@@ -13,20 +13,32 @@ type Role =
   | "parent"
   | "student";
 
+type SourceType =
+  | "account"
+  | "student_record"
+  | "teacher_record"
+  | "staff_record";
+
 type Person = {
   id: string;
   email: string;
   full_name: string | null;
   phone: string | null;
-  role: Role;
+  role: Role | string;
   is_active: boolean;
   last_login: string | null;
   created_at: string;
   updated_at: string;
+  avatar_path?: string | null;
+  sourceType: SourceType;
+  hasPortalAccount: boolean;
   personnel: {
     staffId: string | null;
     admissionNumber: string | null;
     personnelStatus: string | null;
+    className: string | null;
+    arm: string | null;
+    isDemoStudent: boolean;
   };
 };
 
@@ -41,7 +53,7 @@ const roles: { id: Role; label: string }[] = [
   { id: "student", label: "Student" },
 ];
 
-const roleLabel = (role: Role) =>
+const roleLabel = (role: Role | string) =>
   roles.find((item) => item.id === role)?.label ?? role;
 
 const formatDate = (value: string | null) => {
@@ -54,8 +66,8 @@ const formatDate = (value: string | null) => {
   }).format(new Date(value));
 };
 
-const initials = (name: string | null, email: string) => {
-  const source = (name ?? email).trim();
+const initials = (name: string | null, fallback: string) => {
+  const source = (name ?? fallback).trim();
 
   const parts = source
     .split(/\s+/)
@@ -67,6 +79,21 @@ const initials = (name: string | null, email: string) => {
   return parts
     .map((part) => part.charAt(0).toUpperCase())
     .join("");
+};
+
+const sourceLabel = (person: Person) => {
+  if (person.hasPortalAccount) return "Portal Account";
+
+  switch (person.sourceType) {
+    case "student_record":
+      return "Student Record";
+    case "teacher_record":
+      return "Teacher Record";
+    case "staff_record":
+      return "Staff Record";
+    default:
+      return "Academy Record";
+  }
 };
 
 export default function PeoplePage() {
@@ -128,12 +155,12 @@ export default function PeoplePage() {
       const matchesSearch =
         !query ||
         (person.full_name ?? "").toLowerCase().includes(query) ||
-        person.email.toLowerCase().includes(query) ||
+        (person.hasPortalAccount ? person.email : "").toLowerCase().includes(query) ||
         (person.phone ?? "").toLowerCase().includes(query) ||
         (person.personnel.staffId ?? "").toLowerCase().includes(query) ||
-        (person.personnel.admissionNumber ?? "")
-          .toLowerCase()
-          .includes(query);
+        (person.personnel.admissionNumber ?? "").toLowerCase().includes(query) ||
+        (person.personnel.className ?? "").toLowerCase().includes(query) ||
+        (person.personnel.arm ?? "").toLowerCase().includes(query);
 
       const matchesRole =
         roleFilter === "all" || person.role === roleFilter;
@@ -146,6 +173,16 @@ export default function PeoplePage() {
       return matchesSearch && matchesRole && matchesStatus;
     });
   }, [people, search, roleFilter, statusFilter]);
+
+  const directoryCount = people.length;
+  const portalAccountCount = people.filter(
+    (person) => person.hasPortalAccount,
+  ).length;
+  const noPortalAccountCount = people.filter(
+    (person) => !person.hasPortalAccount,
+  ).length;
+  const activeCount = people.filter((person) => person.is_active).length;
+  const inactiveCount = people.filter((person) => !person.is_active).length;
 
   async function submitInvite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -241,7 +278,7 @@ export default function PeoplePage() {
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search name, email, phone or ID..."
+            placeholder="Search name, email, phone, class or ID..."
             aria-label="Search people"
           />
         </div>
@@ -307,13 +344,28 @@ export default function PeoplePage() {
         </div>
 
         <div>
-          <strong>{people.filter((person) => person.is_active).length}</strong>
-          <span>active accounts</span>
+          <strong>{directoryCount}</strong>
+          <span>directory records</span>
         </div>
 
         <div>
-          <strong>{people.filter((person) => !person.is_active).length}</strong>
-          <span>inactive accounts</span>
+          <strong>{portalAccountCount}</strong>
+          <span>portal accounts</span>
+        </div>
+
+        <div>
+          <strong>{noPortalAccountCount}</strong>
+          <span>without portal account</span>
+        </div>
+
+        <div>
+          <strong>{activeCount}</strong>
+          <span>active records</span>
+        </div>
+
+        <div>
+          <strong>{inactiveCount}</strong>
+          <span>inactive records</span>
         </div>
       </div>
 
@@ -325,6 +377,8 @@ export default function PeoplePage() {
                 <th>Person</th>
                 <th>Role</th>
                 <th>Academy ID</th>
+                <th>Class / Arm</th>
+                <th>Access</th>
                 <th>Status</th>
                 <th>Last login</th>
                 <th>Created</th>
@@ -335,7 +389,7 @@ export default function PeoplePage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={9}>
                     <div className="people-loading">
                       <div className="people-spinner" />
                       <span>Loading academy people...</span>
@@ -344,7 +398,7 @@ export default function PeoplePage() {
                 </tr>
               ) : filteredPeople.length === 0 ? (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={9}>
                     <div className="people-empty">
                       <strong>No people found</strong>
                       <span>
@@ -361,30 +415,54 @@ export default function PeoplePage() {
                     person.personnel.staffId ??
                     "Not assigned";
 
+                  const classAndArm =
+                    person.personnel.className
+                      ? person.personnel.arm
+                        ? `${person.personnel.className} · ${person.personnel.arm}`
+                        : person.personnel.className
+                      : "—";
+
+                  const canManageProfile =
+                    person.sourceType === "account";
+
+                  const personContent = (
+                    <div className="person-table-cell">
+                      <div className="person-avatar">
+                        {initials(
+                          person.full_name,
+                          person.hasPortalAccount ? person.email : academyId,
+                        )}
+                      </div>
+
+                      <div className="person-table-name">
+                        <strong>
+                          {person.full_name || "Unnamed record"}
+                        </strong>
+
+                        <span>
+                          {person.hasPortalAccount
+                            ? person.email
+                            : "No portal account"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+
                   return (
-                    <tr key={person.id}>
+                    <tr key={`${person.sourceType}-${person.id}`}>
                       <td>
-                        <Link
-                          href={`/super-admin/people/${person.id}`}
-                          className="person-table-link"
-                        >
-                          <div className="person-table-cell">
-                            <div className="person-avatar">
-                              {initials(
-                                person.full_name,
-                                person.email,
-                              )}
-                            </div>
-
-                            <div className="person-table-name">
-                              <strong>
-                                {person.full_name || "Unnamed account"}
-                              </strong>
-
-                              <span>{person.email}</span>
-                            </div>
+                        {canManageProfile ? (
+                          <Link
+                            href={`/super-admin/people/${person.id}`}
+                            className="person-table-link"
+                          >
+                            {personContent}
+                          </Link>
+                        ) : (
+                          <div className="person-table-link">
+                            {personContent}
                           </div>
-                        </Link>
+                        )}
                       </td>
 
                       <td>
@@ -396,6 +474,24 @@ export default function PeoplePage() {
                       <td>
                         <span className="person-identifier">
                           {academyId}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span className="person-identifier">
+                          {classAndArm}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span
+                          className={
+                            person.hasPortalAccount
+                              ? "person-access-badge account"
+                              : "person-access-badge none"
+                          }
+                        >
+                          {sourceLabel(person)}
                         </span>
                       </td>
 
@@ -412,17 +508,27 @@ export default function PeoplePage() {
                         </span>
                       </td>
 
-                      <td>{formatDate(person.last_login)}</td>
+                      <td>
+                        {person.hasPortalAccount
+                          ? formatDate(person.last_login)
+                          : "—"}
+                      </td>
 
                       <td>{formatDate(person.created_at)}</td>
 
                       <td>
-                        <Link
-                          href={`/super-admin/people/${person.id}`}
-                          className="person-manage-link"
-                        >
-                          Manage
-                        </Link>
+                        {canManageProfile ? (
+                          <Link
+                            href={`/super-admin/people/${person.id}`}
+                            className="person-manage-link"
+                          >
+                            Manage
+                          </Link>
+                        ) : (
+                          <span className="person-manage-link disabled">
+                            Record
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -553,7 +659,9 @@ export default function PeoplePage() {
                   className="primary-action"
                   disabled={saving}
                 >
-                  {saving ? "Creating invitation..." : "Create invitation"}
+                  {saving
+                    ? "Creating invitation..."
+                    : "Create invitation"}
                 </button>
               </div>
             </form>
