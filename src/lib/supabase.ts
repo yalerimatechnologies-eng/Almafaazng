@@ -1,39 +1,45 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabasePublishableKey =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-if (!url) {
+if (!supabaseUrl) {
   throw new Error(
-    "Missing NEXT_PUBLIC_SUPABASE_URL. Add it to .env.local and restart the dev server."
+    "Missing NEXT_PUBLIC_SUPABASE_URL. Add it to .env.local and restart the dev server.",
   );
 }
-if (!key) {
+
+if (!supabasePublishableKey) {
   throw new Error(
-    "Missing NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Add it to .env.local and restart the dev server."
+    "Missing NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Add it to .env.local and restart the dev server.",
   );
 }
+
+const url: string = supabaseUrl;
+const key: string = supabasePublishableKey;
 
 let client: SupabaseClient | null = null;
 
 /**
- * Lazy singleton. Safe to call from any client component.
+ * Browser Supabase client.
+ *
+ * Uses @supabase/ssr so the authenticated session can be
+ * synchronized with the Next.js server through cookies.
+ *
+ * Never use a service-role key here.
  */
 export function getSupabase(): SupabaseClient {
   if (!client) {
-    client = createClient(url!, key!, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    });
+    client = createBrowserClient(url, key);
   }
+
   return client;
 }
 
 /**
- * Eager export kept for components that already import `{ supabase }`.
- * Never use a service-role key here — this bundle ships to the browser.
+ * Existing components import `{ supabase }`, so keep the
+ * same public API.
  */
 export const supabase = getSupabase();

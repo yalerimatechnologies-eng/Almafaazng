@@ -59,7 +59,7 @@ export async function resolveCurrentAccount(
       .eq("id", userId)
       .maybeSingle();
 
-    if (profileError) {
+    if (profileError) { console.error("ALMAFAAZ PROFILE ERROR: message=" + String(profileError.message) + " | details=" + String(profileError.details) + " | hint=" + String(profileError.hint) + " | code=" + String(profileError.code));
       return {
         ok: false,
         reason: "error",
